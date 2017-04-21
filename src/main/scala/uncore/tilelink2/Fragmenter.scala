@@ -105,7 +105,7 @@ class TLFragmenter(val minSize: Int, val maxSize: Int, val alwaysMin: Boolean = 
        * get4    get4   0       ackD4   0      ackD4     0    0
        * get1    get1   0       ackD1   0      ackD1     0    0
        *
-       * put64   put16  6                                15   
+       * put64   put16  6                                15
        * put64   put16  6                                14
        * put64   put16  6                                13
        * put64   put16  6       ack16   6                12    12
@@ -201,7 +201,7 @@ class TLFragmenter(val minSize: Int, val maxSize: Int, val alwaysMin: Boolean = 
       val maxLgPutPartial  = Mux1H(find, maxLgPutPartials)
       val maxLgHint        = Mux1H(find, maxLgHints)
 
-      val limit = if (alwaysMin) lgMinSize else 
+      val limit = if (alwaysMin) lgMinSize else
         MuxLookup(in_a.bits.opcode, lgMinSize, Array(
           TLMessages.PutFullData    -> maxLgPutFull,
           TLMessages.PutPartialData -> maxLgPutPartial,
@@ -245,6 +245,26 @@ class TLFragmenter(val minSize: Int, val maxSize: Int, val alwaysMin: Boolean = 
       out.b.ready := Bool(true)
       out.c.valid := Bool(false)
       out.e.valid := Bool(false)
+
+      // Cover Point Computation
+      {
+        val max_cycles_verif = maxSize/beatBytes + maxSize/beatBytes + 2
+        // need this started counter because initialization shouldn't be counted toward cycles
+        val started_counter = RegInit(false.B)
+        when(out.a.fire()) {
+          started_counter := true.B
+        } .otherwise {
+          started_counter := started_counter
+        }
+
+        val init_counter = RegInit(UInt(0, width=log2Up(max_cycles_verif)))
+        when(started_counter) {
+          init_counter := init_counter + 1.U
+        } .otherwise {
+          init_counter := init_counter
+        }
+        add_cover_code(init_counter===max_cycles_verif.U)
+      }
     }
   }
 }

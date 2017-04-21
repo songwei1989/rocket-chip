@@ -53,12 +53,15 @@ abstract class LazyModule()(implicit val p: Parameters)
 
   def module: LazyModuleImp
 
+  var add_cover_code: (Bool => Unit)  = (cover_point: Bool) => {}
+
   protected[diplomacy] def instantiate() = {
     children.reverse.foreach { c =>
       // !!! fix chisel3 so we can pass the desired sourceInfo
       // implicit val sourceInfo = c.module.outer.info
       Module(c.module)
     }
+
     bindings.reverse.foreach { f => f () }
   }
 
