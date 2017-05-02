@@ -26,7 +26,10 @@ class ExampleTopModule[+L <: ExampleTop, +B <: ExampleTopBundle[L]](_outer: L, _
     with PeripheryExtInterruptsModule
     with PeripheryMasterAXI4MemModule
     with PeripheryMasterAXI4MMIOModule
-    with PeripherySlaveAXI4Module
+    with PeripherySlaveAXI4Module {
+  val clock = IO((Clock(INPUT)))
+  val reset = IO((Bool(INPUT)))
+}
 
 class ExampleRocketTop(implicit p: Parameters) extends ExampleTop
     with PeripheryBootROM

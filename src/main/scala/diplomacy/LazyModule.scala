@@ -4,6 +4,7 @@ package diplomacy
 
 import Chisel._
 import config._
+import chisel3.experimental.{BaseModule, RawModule}
 import chisel3.internal.sourceinfo.{SourceInfo, SourceLine, UnlocatableSourceInfo}
 
 abstract class LazyModule()(implicit val p: Parameters)
@@ -51,7 +52,7 @@ abstract class LazyModule()(implicit val p: Parameters)
   def name = valName.getOrElse(className)
   def line = sourceLine(info)
 
-  def module: LazyModuleImp
+  def module: LazyModuleImpLike
 
   protected[diplomacy] def instantiate() = {
     children.reverse.foreach { c =>
@@ -140,7 +141,14 @@ object LazyModule
   }
 }
 
-abstract class LazyModuleImp(outer: LazyModule) extends Module
+trait LazyModuleImpLike extends BaseModule
+{
+  def clock: Clock
+  def reset: Bool
+}
+
+
+abstract class LazyModuleImp(outer: LazyModule) extends Module with  LazyModuleImpLike
 {
   // .module had better not be accessed while LazyModules are still being built!
   require (LazyModule.stack.isEmpty, s"${outer.name}.module was constructed before LazyModule() was run on ${LazyModule.stack.head.name}")
@@ -149,5 +157,19 @@ abstract class LazyModuleImp(outer: LazyModule) extends Module
   suggestName(outer.instanceName)
 
   outer.instantiate()
+
+  implicit val p = outer.p
+}
+
+abstract class LazyRawModuleImp(outer: LazyModule) extends RawModule with  LazyModuleImpLike
+{
+  // .module had better not be accessed while LazyModules are still being built!
+  require (LazyModule.stack.isEmpty, s"${outer.name}.module was constructed before LazyModule() was run on ${LazyModule.stack.head.name}")
+
+  override def desiredName = outer.moduleName
+  suggestName(outer.instanceName)
+
+  outer.instantiate()
+
   implicit val p = outer.p
 }

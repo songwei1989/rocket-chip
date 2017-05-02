@@ -29,5 +29,7 @@ class GroundTestTopBundle[+L <: GroundTestTop](_outer: L) extends BaseTopBundle(
 class GroundTestTopModule[+L <: GroundTestTop, +B <: GroundTestTopBundle[L]](_outer: L, _io: () => B) extends BaseTopModule(_outer, _io)
     with PeripheryMasterAXI4MemModule
     with PeripheryTestRAMModule {
+  val clock = IO((Clock(INPUT)))
+  val reset = IO((Bool(INPUT)))
   io.success := outer.coreplex.module.io.success
 }
